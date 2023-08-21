@@ -1,0 +1,101 @@
+---
+title: "Regression Analysis Salary Dataset"
+author: "Gilbert Tarus"
+date: "2023-08-21"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading the Packages
+
+```{r}
+library(dplyr)
+library(caTools)
+library(ggplot2)
+library(readr)
+library(skimr)
+library(naniar)
+library(caret)
+```
+
+## Reading Data
+
+```{r}
+salary <- read_csv("data/Salary_dataset.csv")
+head(salary)
+```
+## Data Cleaning
+
+```{r}
+salary %>%  select(-1) -> salary
+```
+
+## Exploratory Analysis
+
+```{r}
+str(salary)
+```
+```{r}
+salary %>% skim()
+```
+### Data Visualization
+
+```{r}
+## Scatter plot
+ggplot(salary, aes(x = YearsExperience, y = Salary))+
+  geom_point()+
+  geom_smooth(se = FALSE, method = "loess")
+```
+
+### Summary Statistics
+
+```{r}
+salary %>% summary()
+```
+### Correlation Analysis
+
+```{r}
+salary %>% 
+  cor()
+```
+There is a very string positive relationship between the Years of Experience and Salary.
+
+## Data Selection
+
+```{r}
+## Training and test data
+sample_index <- caTools::sample.split(salary$Salary, SplitRatio = .65)
+train <- subset(salary, sample_index)
+test <- subset(salary, !sample_index)
+
+nrow(train)
+nrow(test)
+```
+## Model
+
+```{r}
+mod1 <- lm(Salary ~., data = train)
+summary(mod1)
+```
+From the results above, Years of Experience have a very small p-value. This makes it more significant to predict salary.
+
+Adjusted R-Squared is .9569. This indicates that the model  explains more that 95% of the variability in the data. This is indicated by a very small p-value.
+
+## Prediction
+
+```{r}
+predictions <- predict(mod1, newdata = test)
+actual_prediction <- cbind(Salary = test$Salary, Predicted = predictions)
+actual_prediction <- as.data.frame(actual_prediction)
+actual_prediction <- actual_prediction %>% mutate(error = Salary - Predicted)
+summary(actual_prediction$error)
+```
+Conclusively, the model performance is 95.69%. This implies that the model can explain 95.69% of the variability in the data.
+
+
+
+
+
